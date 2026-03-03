@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root { --tg-color: #0088cc; }
+        body { font-family: sans-serif; text-align: center; background: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); }
+        #grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 350px; margin: 20px auto; padding: 10px; }
+        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #eee; border-radius: 4px; font-weight: bold; cursor: pointer; color: #333; transition: 0.2s; }
+        .cell.marked { background: var(--tg-color); color: white; transform: scale(0.95); }
+    </style>
+</head>
+<body>
+    <h3>Bingo!</h3>
+    <div id="grid">Loading...</div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        const API_URL = "https://your-backend-url.up.railway.app"; // CHANGE THIS
+
+        async function init() {
+            try {
+                const res = await fetch(`${API_URL}/generate_card`);
+                const data = await res.json();
+                const grid = document.getElementById('grid');
+                grid.innerHTML = '';
+                
+                data.card.forEach(num => {
+                    const div = document.createElement('div');
+                    div.className = 'cell';
+                    div.innerText = num;
+                    div.onclick = () => {
+                        div.classList.toggle('marked');
+                        tg.HapticFeedback.impactOccurred('light');
+                    };
+                    grid.appendChild(div);
+                });
+
+                tg.MainButton.setText("CLAIM BINGO!").show();
+                tg.MainButton.onClick(() => {
+                    const marked = Array.from(document.querySelectorAll('.cell.marked')).map(e => e.innerText);
+                    tg.sendData(JSON.stringify({ event: "bingo_win", numbers: marked }));
+                });
+            } catch (e) { document.getElementById('grid').innerText = "Error loading game."; }
+        }
+        init();
+    </script>
+</body>
+</html>
