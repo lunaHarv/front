@@ -1,369 +1,1131 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JCor Alpha Bingo - Side-by-Side</title>
     <style>
-        :root {
-            --bg-lavender: #d1b3e0;
-            --dark-purple: #8e44ad;
-            --accent-orange: #f39c12;
-            --success-green: #27ae60;
-            --white: #ffffff;
-            --b-red: #e74c3c; --i-blue: #3498db; --n-grey: #7f8c8d; --g-green: #2ecc71; --o-orange: #f39c12;
-        }
+      :root {
+        --bg-lavender: #d1b3e0;
+        --dark-purple: #8e44ad;
+        --accent-orange: #f39c12;
+        --success-green: #27ae60;
+        --white: #ffffff;
+        --b-red: #e74c3c;
+        --i-blue: #3498db;
+        --n-grey: #7f8c8d;
+        --g-green: #2ecc71;
+        --o-orange: #f39c12;
+      }
 
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-lavender); margin: 0; display: flex; justify-content: center; color: #333; }
-        #app-container { width: 100%; max-width: 900px; min-height: 100vh; background: var(--bg-lavender); position: relative; padding: 10px; box-sizing: border-box; }
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background-color: var(--bg-lavender);
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        color: #333;
+      }
+      #app-container {
+        width: 100%;
+        max-width: 900px;
+        min-height: 100vh;
+        background: var(--bg-lavender);
+        position: relative;
+        padding: 10px;
+        box-sizing: border-box;
+      }
 
-        /* HEADER */
-        .stats-bar { display: flex; background: white; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .stat-item { flex: 1; text-align: center; padding: 10px; border-right: 1px solid #eee; }
-        .stat-label { font-size: 10px; color: var(--dark-purple); font-weight: bold; display: block; text-transform: uppercase; }
-        .stat-value { font-size: 18px; font-weight: bold; color: var(--accent-orange); }
-
-        .page { display: none; flex-direction: column; }
-        .page.active { display: flex; }
-
-        /* SELECTION GRID */
-        .scroll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 5px; background: rgba(255,255,255,0.4); padding: 10px; border-radius: 12px; height: 200px; overflow-y: auto; }
-        .card-btn { background: #eee; border: none; border-radius: 4px; padding: 10px 0; font-size: 12px; font-weight: bold; cursor: pointer; }
-        .card-btn.selected { background: var(--success-green); color: white; }
-#selected-previews, #live-player-cards {
-    display: flex;
-    flex-direction: row;      /* Force side-by-side */
-    flex-wrap: wrap;         /* Wrap to next line if screen is too small */
-    gap: 10px;               /* Space between cards */
-    justify-content: center; /* Center them horizontally */
-    width: 100%;
-    margin-top: 15px;
-}
-        /* RESPONSIVE SIDE-BY-SIDE (PAGE 2) */
-        .game-wrapper { display: flex; gap: 15px; flex-wrap: wrap; }
-        
-        /* Left Side: 75 Numbers */
-        .master-side { flex: 1; min-width: 300px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .master-grid { display: flex; gap: 4px; }
-        .bingo-column { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-        .b-header { color: white; text-align: center; font-weight: bold; padding: 5px 0; border-radius: 4px; font-size: 14px; margin-bottom: 4px; }
-        .num-cell { width: 100%; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 11px; background: #f0f0f0; border-radius: 2px; font-weight: bold; }
-        .num-cell.called { background-color: var(--success-green); color: white; transform: scale(1.05); }
-
-        /* Right Side: Caller & Personal Card */
-        .personal-side { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 15px; }
-        
-        .caller-card { background: var(--dark-purple); color: white; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; }
-        .call-text { font-size: 36px; font-weight: bold; background: white; color: var(--dark-purple); padding: 5px 15px; border-radius: 10px; }
-
-        .player-cards-list { display: flex; flex-direction: column; gap: 15px; }
-        .bingo-card-live {
-    background: white;
-    padding: 6px;
-    border-radius: 8px;
-    border: 2px solid var(--dark-purple);
-    width: 140px;            /* Fixed small width */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-    .live-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 2px;
-}
-
-.live-cell {
-    background: #f4f4f4;
-    height: 24px;            /* Very compact height */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    border-radius: 2px;
-    font-size: 11px;         /* Small font for small cells */
-    cursor: pointer;
-}
-
-.live-cell.marked {
-    background: var(--accent-orange);
-    color: white;
-}
-
-        /* BINGO BUTTON */
-        .bingo-btn { width: 100%; background: var(--accent-orange); color: white; border: none; padding: 20px; font-size: 24px; font-weight: bold; border-radius: 12px; cursor: pointer; box-shadow: 0 5px 0 #d35400; transition: 0.1s; margin-top: auto; }
-        .bingo-btn:active { transform: translateY(4px); box-shadow: none; }
-
-        /* PAGE 3 WINNER */
-        .winner-screen { background: white; border-radius: 20px; padding: 30px; text-align: center; border: 5px solid var(--accent-orange); margin-top: 20px; }
-        .footer-timer { background: var(--dark-purple); color: white; text-align: center; padding: 15px; font-size: 24px; font-weight: bold; border-radius: 10px; margin-top: 20px; }
-
-        /* MOBILE FIXES */
-        @media (max-width: 650px) {
-            .game-wrapper { flex-direction: column; }
-            .master-side, .personal-side { width: 100%; min-width: unset; }
-            .num-cell { height: 20px; font-size: 9px; }
-        }
-         @media (max-width: 300px) {
-            .game-wrapper { flex-direction: column; }
-            .master-side, .personal-side { width: 100%; min-width: unset; }
-            .num-cell { height: 20px; font-size: 9px; }
-        }
-         @media (max-width: 2000px) {
-            .game-wrapper { flex-direction: column; }
-            .master-side, .personal-side { width: 100%; min-width: unset; }
-            .num-cell { height: 20px; font-size: 9px; }
-        }
-         @media (max-width: 100px) {
-            .game-wrapper { flex-direction: column; }
-            .master-side, .personal-side { width: 100%; min-width: unset; }
-            .num-cell { height: 20px; font-size: 9px; }
-        }
-        /* 1. Reduce the container padding and card border */
-.bingo-card-live {
-    background: white;
-    padding: 6px;             /* Reduced from 12px */
-    border-radius: 8px;
-    border: 2px solid var(--dark-purple);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    max-width: 240px;         /* Prevents card from stretching too wide */
-    margin: 0 auto;           /* Centers the small card */
-}
-
-/* 2. Shrink the header text (Card #316) */
-.bingo-card-live div[style*="font-weight:bold"] {
-    font-size: 10px !important; 
-    margin-bottom: 4px !important;
-}
-
-/* 3. Reduce the size of the number cells */
-.live-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 2px;                 /* Thinner lines between numbers */
-}
-
-.live-cell {
-    background: #eee;
-    height: 30px;             /* Fixed height for a compact look */
-    width: 30px;              /* Fixed width for a compact look */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    border-radius: 2px;
-    font-size: 12px;          /* Smaller numbers */
-}
-
-/* 4. Keep it responsive */
-@media (max-width: 400px) {
-    .live-cell {
-        height: 25px;
-        width: 25px;
+      /* HEADER */
+      .stats-bar {
+        display: flex;
+        background: white;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .stat-item {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        border-right: 1px solid #eee;
+      }
+      .stat-label {
         font-size: 10px;
-    }
-}
-@media (max-width: 300px) {
-    .live-cell {
-        height: 25px;
-        width: 25px;
-        font-size: 10px;
-    }
-}
+        color: var(--dark-purple);
+        font-weight: bold;
+        display: block;
+        text-transform: uppercase;
+      }
+      .stat-value {
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--accent-orange);
+      }
+
+      .page {
+        display: none;
+        flex-direction: column;
+      }
+      .page.active {
+        display: flex;
+      }
+
+      /* SELECTION GRID */
+      .scroll-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+        gap: 5px;
+        background: rgba(255, 255, 255, 0.4);
+        padding: 10px;
+        border-radius: 12px;
+        height: 200px;
+        overflow-y: auto;
+      }
+      .card-btn {
+        background: #eee;
+        border: none;
+        border-radius: 4px;
+        padding: 10px 0;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .card-btn.selected {
+        background: var(--success-green);
+        color: white;
+      }
+      #selected-previews,
+      #live-player-cards {
+        display: flex;
+        flex-direction: row; /* Force side-by-side */
+        flex-wrap: wrap; /* Wrap to next line if screen is too small */
+        gap: 10px; /* Space between cards */
+        justify-content: center; /* Center them horizontally */
+        width: 100%;
+        margin-top: 15px;
+      }
+      /* RESPONSIVE SIDE-BY-SIDE (PAGE 2) */
+      .game-wrapper {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+
+      /* Left Side: 75 Numbers */
+      .master-side {
+        flex: 1;
+        min-width: 300px;
+        background: white;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+      .master-grid {
+        display: flex;
+        gap: 4px;
+      }
+      .bingo-column {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+      }
+      .b-header {
+        color: white;
+        text-align: center;
+        font-weight: bold;
+        padding: 5px 0;
+        border-radius: 4px;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      .num-cell {
+        width: 100%;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        background: #f0f0f0;
+        border-radius: 2px;
+        font-weight: bold;
+      }
+      .num-cell.called {
+        background-color: var(--success-green);
+        color: white;
+        transform: scale(1.05);
+      }
+
+      /* Right Side: Caller & Personal Card */
+      .personal-side {
+        flex: 1;
+        min-width: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .caller-card {
+        background: var(--dark-purple);
+        color: white;
+        padding: 15px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .call-text {
+        font-size: 36px;
+        font-weight: bold;
+        background: white;
+        color: var(--dark-purple);
+        padding: 5px 15px;
+        border-radius: 10px;
+      }
+
+      .player-cards-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .bingo-card-live {
+        background: white;
+        padding: 6px;
+        border-radius: 8px;
+        border: 2px solid var(--dark-purple);
+        width: 140px; /* Fixed small width */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .live-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 2px;
+      }
+
+      .live-cell {
+        background: #f4f4f4;
+        height: 24px; /* Very compact height */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        border-radius: 2px;
+        font-size: 11px; /* Small font for small cells */
+        cursor: pointer;
+      }
+
+      .live-cell.marked {
+        background: var(--accent-orange);
+        color: white;
+      }
+
+      /* BINGO BUTTON */
+      .bingo-btn {
+        width: 100%;
+        background: var(--accent-orange);
+        color: white;
+        border: none;
+        padding: 20px;
+        font-size: 24px;
+        font-weight: bold;
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: 0 5px 0 #d35400;
+        transition: 0.1s;
+        margin-top: auto;
+      }
+      .bingo-btn:active {
+        transform: translateY(4px);
+        box-shadow: none;
+      }
+
+      /* PAGE 3 WINNER */
+      .winner-screen {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        border: 5px solid var(--accent-orange);
+        margin-top: 20px;
+      }
+      .footer-timer {
+        background: var(--dark-purple);
+        color: white;
+        text-align: center;
+        padding: 15px;
+        font-size: 24px;
+        font-weight: bold;
+        border-radius: 10px;
+        margin-top: 20px;
+      }
+
+      /* MOBILE FIXES */
+      @media (max-width: 650px) {
+        .game-wrapper {
+          flex-direction: column;
+        }
+        .master-side,
+        .personal-side {
+          width: 100%;
+          min-width: unset;
+        }
+        .num-cell {
+          height: 20px;
+          font-size: 9px;
+        }
+      }
+      @media (max-width: 300px) {
+        .game-wrapper {
+          flex-direction: column;
+        }
+        .master-side,
+        .personal-side {
+          width: 100%;
+          min-width: unset;
+        }
+        .num-cell {
+          height: 20px;
+          font-size: 9px;
+        }
+      }
+      @media (max-width: 2000px) {
+        .game-wrapper {
+          flex-direction: column;
+        }
+        .master-side,
+        .personal-side {
+          width: 100%;
+          min-width: unset;
+        }
+        .num-cell {
+          height: 20px;
+          font-size: 9px;
+        }
+      }
+      @media (max-width: 100px) {
+        .game-wrapper {
+          flex-direction: column;
+        }
+        .master-side,
+        .personal-side {
+          width: 100%;
+          min-width: unset;
+        }
+        .num-cell {
+          height: 20px;
+          font-size: 9px;
+        }
+      }
+      /* 1. Reduce the container padding and card border */
+      .bingo-card-live {
+        background: white;
+        padding: 6px; /* Reduced from 12px */
+        border-radius: 8px;
+        border: 2px solid var(--dark-purple);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        max-width: 240px; /* Prevents card from stretching too wide */
+        margin: 0 auto; /* Centers the small card */
+      }
+
+      /* 2. Shrink the header text (Card #316) */
+      .bingo-card-live div[style*="font-weight:bold"] {
+        font-size: 10px !important;
+        margin-bottom: 4px !important;
+      }
+
+      /* 3. Reduce the size of the number cells */
+      .live-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 2px; /* Thinner lines between numbers */
+      }
+
+      .live-cell {
+        background: #eee;
+        height: 30px; /* Fixed height for a compact look */
+        width: 30px; /* Fixed width for a compact look */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        border-radius: 2px;
+        font-size: 12px; /* Smaller numbers */
+      }
+
+      /* 4. Keep it responsive */
+      @media (max-width: 400px) {/* RESPONSIVE SIDE-BY-SIDE (PAGE 2) */
+      .game-wrapper {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+
+      /* Left Side: 75 Numbers */
+      .master-side {
+        flex: 1;
+        min-width: 300px;
+        background: white;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+      .master-grid {
+        display: flex;
+        gap: 4px;
+      }
+      .bingo-column {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+      }
+      .b-header {
+        color: white;
+        text-align: center;
+        font-weight: bold;
+        padding: 5px 0;
+        border-radius: 4px;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      .num-cell {
+        width: 100%;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        background: #f0f0f0;
+        border-radius: 2px;
+        font-weight: bold;
+      }
+      .num-cell.called {
+        background-color: var(--success-green);
+        color: white;
+        transform: scale(1.05);
+      }
+
+      /* Right Side: Caller & Personal Card */
+      .personal-side {
+        flex: 1;
+        min-width: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .caller-card {
+        background: var(--dark-purple);
+        color: white;
+        padding: 15px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .call-text {
+        font-size: 36px;
+        font-weight: bold;
+        background: white;
+        color: var(--dark-purple);
+        padding: 5px 15px;
+        border-radius: 10px;
+      }
+
+      .player-cards-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .bingo-card-live {
+        background: white;
+        padding: 6px;
+        border-radius: 8px;
+        border: 2px solid var(--dark-purple);
+        width: 140px; /* Fixed small width */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .live-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 2px;
+      }
+
+      .live-cell {
+        background: #f4f4f4;
+        height: 24px; /* Very compact height */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        border-radius: 2px;
+        font-size: 11px; /* Small font for small cells */
+        cursor: pointer;
+      }
+
+      .live-cell.marked {
+        background: var(--accent-orange);
+        color: white;
+      }
+
+      /* BINGO BUTTON */
+      .bingo-btn {
+        width: 100%;
+        background: var(--accent-orange);
+        color: white;
+        border: none;
+        padding: 20px;
+        font-size: 24px;
+        font-weight: bold;
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: 0 5px 0 #d35400;
+        transition: 0.1s;
+        margin-top: auto;
+      }
+      .bingo-btn:active {
+        transform: translateY(4px);
+        box-shadow: none;
+      }
+
+      /* PAGE 3 WINNER */
+      .winner-screen {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        border: 5px solid var(--accent-orange);
+        margin-top: 20px;
+      }
+      .footer-timer {
+        background: var(--dark-purple);
+        color: white;
+        text-align: center;
+        padding: 15px;
+        font-size: 24px;
+        font-weight: bold;
+        border-radius: 10px;
+        margin-top: 20px;
+      }
+
+      /* MOBILE FIXES */
+      @media (max-width: 650px) {
+        .game-wrapper {
+          flex-direction: column;
+        }
+        .master-side,
+        .personal-side {
+          width: 100%;
+          min-width: unset;
+        }
+        .num-cell {
+          height: 20px;
+          font-size: 9px;
+        }
+      }
+      @media (max-width: 300px) {
+        .game-wrapper {
+          flex-direction: column;
+        }
+        .master-side,
+        .personal-side {
+          width: 100%;
+          min-width: unset;
+        }
+        .num-cell {
+          height: 20px;
+          font-size: 9px;
+        }
+      }
+      @media (max-width: 2000px) {
+        .game-wrapper {
+          flex-direction: column;
+        }
+        .master-side,
+        .personal-side {
+          width: 100%;
+          min-width: unset;
+        }
+        .num-cell {
+          height: 20px;
+          font-size: 9px;
+        }
+      }
+      @media (max-width: 100px) {
+        .game-wrapper {
+          flex-direction: column;
+        }
+        .master-side,
+        .personal-side {
+          width: 100%;
+          min-width: unset;
+        }
+        .num-cell {
+          height: 20px;
+          font-size: 9px;
+        }
+      }
+      /* 1. Reduce the container padding and card border */
+      .bingo-card-live {
+        background: white;
+        padding: 6px; /* Reduced from 12px */
+        border-radius: 8px;
+        border: 2px solid var(--dark-purple);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        max-width: 240px; /* Prevents card from stretching too wide */
+        margin: 0 auto; /* Centers the small card */
+      }
+
+      /* 2. Shrink the header text (Card #316) */
+      .bingo-card-live div[style*="font-weight:bold"] {
+        font-size: 10px !important;
+        margin-bottom: 4px !important;
+      }
+
+      /* 3. Reduce the size of the number cells */
+      .live-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 2px; /* Thinner lines between numbers */
+      }
+
+      .live-cell {
+        background: #eee;
+        height: 30px; /* Fixed height for a compact look */
+        width: 30px; /* Fixed width for a compact look */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        border-radius: 2px;
+        font-size: 12px; /* Smaller numbers */
+      }
+
+      }
+      @media (max-width: 300px) {/* RESPONSIVE SIDE-BY-SIDE (PAGE 2) */
+      .game-wrapper {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+
+      /* Left Side: 75 Numbers */
+      .master-side {
+        flex: 1;
+        min-width: 300px;
+        background: white;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+      .master-grid {
+        display: flex;
+        gap: 4px;
+      }
+      .bingo-column {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+      }
+      .b-header {
+        color: white;
+        text-align: center;
+        font-weight: bold;
+        padding: 5px 0;
+        border-radius: 4px;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      .num-cell {
+        width: 100%;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        background: #f0f0f0;
+        border-radius: 2px;
+        font-weight: bold;
+      }
+      .num-cell.called {
+        background-color: var(--success-green);
+        color: white;
+        transform: scale(1.05);
+      }
+
+      /* Right Side: Caller & Personal Card */
+      .personal-side {
+        flex: 1;
+        min-width: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .caller-card {
+        background: var(--dark-purple);
+        color: white;
+        padding: 15px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .call-text {
+        font-size: 36px;
+        font-weight: bold;
+        background: white;
+        color: var(--dark-purple);
+        padding: 5px 15px;
+        border-radius: 10px;
+      }
+
+      .player-cards-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .bingo-card-live {
+        background: white;
+        padding: 6px;
+        border-radius: 8px;
+        border: 2px solid var(--dark-purple);
+        width: 140px; /* Fixed small width */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .live-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 2px;
+      }
+
+      .live-cell {
+        background: #f4f4f4;
+        height: 24px; /* Very compact height */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        border-radius: 2px;
+        font-size: 11px; /* Small font for small cells */
+        cursor: pointer;
+      }
+
+      .live-cell.marked {
+        background: var(--accent-orange);
+        color: white;
+      }
+
+      /* BINGO BUTTON */
+      .bingo-btn {
+        width: 100%;
+        background: var(--accent-orange);
+        color: white;
+        border: none;
+        padding: 20px;
+        font-size: 24px;
+        font-weight: bold;
+        border-radius: 12px;
+        cursor: pointer;
+        box-shadow: 0 5px 0 #d35400;
+        transition: 0.1s;
+        margin-top: auto;
+      }
+      .bingo-btn:active {
+        transform: translateY(4px);
+        box-shadow: none;
+      }
+
+      /* PAGE 3 WINNER */
+      .winner-screen {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        border: 5px solid var(--accent-orange);
+        margin-top: 20px;
+      }
+      .footer-timer {
+        background: var(--dark-purple);
+        color: white;
+        text-align: center;
+        padding: 15px;
+        font-size: 24px;
+        font-weight: bold;
+        border-radius: 10px;
+        margin-top: 20px;
+      }
+
+      /* MOBILE FIXES */
+      @media (max-width: 650px) {
+        .game-wrapper {
+          flex-direction: column;
+        }
+        .master-side,
+        .personal-side {
+          width: 100%;
+          min-width: unset;
+        }
+        .num-cell {
+          height: 20px;
+          font-size: 9px;
+        }
+      }
+      @media (max-width: 300px) {
+        .game-wrapper {
+          flex-direction: column;
+        }
+        .master-side,
+        .personal-side {
+          width: 100%;
+          min-width: unset;
+        }
+        .num-cell {
+          height: 20px;
+          font-size: 9px;
+        }
+      }
+      @media (max-width: 2000px) {
+        .game-wrapper {
+          flex-direction: column;
+        }
+        .master-side,
+        .personal-side {
+          width: 100%;
+          min-width: unset;
+        }
+        .num-cell {
+          height: 20px;
+          font-size: 9px;
+        }
+      }
+      @media (max-width: 100px) {
+        .game-wrapper {
+          flex-direction: column;
+        }
+        .master-side,
+        .personal-side {
+          width: 100%;
+          min-width: unset;
+        }
+        .num-cell {
+          height: 20px;
+          font-size: 9px;
+        }
+      }
+      /* 1. Reduce the container padding and card border */
+      .bingo-card-live {
+        background: white;
+        padding: 6px; /* Reduced from 12px */
+        border-radius: 8px;
+        border: 2px solid var(--dark-purple);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        max-width: 240px; /* Prevents card from stretching too wide */
+        margin: 0 auto; /* Centers the small card */
+      }
+
+      /* 2. Shrink the header text (Card #316) */
+      .bingo-card-live div[style*="font-weight:bold"] {
+        font-size: 10px !important;
+        margin-bottom: 4px !important;
+      }
+
+      /* 3. Reduce the size of the number cells */
+      .live-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 2px; /* Thinner lines between numbers */
+      }
+
+      .live-cell {
+        background: #eee;
+        height: 30px; /* Fixed height for a compact look */
+        width: 30px; /* Fixed width for a compact look */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        border-radius: 2px;
+        font-size: 12px; /* Smaller numbers */
+      }
+
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div id="app-container">
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span id="header-timer" class="stat-value">20</span
+          ><span class="stat-label">Starts In</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Wallet</span
+          ><span class="stat-value">100.00</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Cards</span
+          ><span id="selected-count" class="stat-value">0</span>
+        </div>
+      </div>
 
-<div id="app-container">
-    <div class="stats-bar">
-        <div class="stat-item"><span id="header-timer" class="stat-value">20</span><span class="stat-label">Starts In</span></div>
-        <div class="stat-item"><span class="stat-label">Wallet</span><span class="stat-value">100.00</span></div>
-        <div class="stat-item"><span class="stat-label">Cards</span><span id="selected-count" class="stat-value">0</span></div>
-    </div>
-
-    <div id="page1" class="page active">
+      <div id="page1" class="page active">
         <div id="selection-grid" class="scroll-grid"></div>
-        <h3 style="color:var(--dark-purple); margin: 15px 0 5px 0;">Your Selected Cards:</h3>
+        <h3 style="color: var(--dark-purple); margin: 15px 0 5px 0">
+          Your Selected Cards:
+        </h3>
         <div id="selected-previews" class="player-cards-list"></div>
-    </div>
+      </div>
 
-    <div id="page2" class="page">
+      <div id="page2" class="page">
         <div class="game-wrapper">
-            <div class="master-side">
-                <div id="master-bingo-grid" class="master-grid"></div>
-            </div>
+          <div class="master-side">
+            <div id="master-bingo-grid" class="master-grid"></div>
+          </div>
 
-            <div class="personal-side">
-                <div class="caller-card">
-                    <div>
-                        <div style="font-size: 10px; text-transform: uppercase;">Current Call</div>
-                        <div id="call-display" class="call-text">--</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 10px; text-transform: uppercase;">History</div>
-                        <div id="ball-history" style="display: flex; gap: 4px; margin-top: 5px;"></div>
-                    </div>
+          <div class="personal-side">
+            <div class="caller-card">
+              <div>
+                <div style="font-size: 10px; text-transform: uppercase">
+                  Current Call
                 </div>
-
-                <div id="live-player-cards" class="player-cards-list"></div>
-                
-                <button class="bingo-btn" onclick="claimBingo()">BINGO!</button>
+                <div id="call-display" class="call-text">--</div>
+              </div>
+              <div style="text-align: right">
+                <div style="font-size: 10px; text-transform: uppercase">
+                  History
+                </div>
+                <div
+                  id="ball-history"
+                  style="display: flex; gap: 4px; margin-top: 5px"
+                ></div>
+              </div>
             </div>
-        </div>
-    </div>
 
-    <div id="page3" class="page">
+            <div id="live-player-cards" class="player-cards-list"></div>
+
+            <button class="bingo-btn" onclick="claimBingo()">BINGO!</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="page3" class="page">
         <div class="winner-screen">
-            <h1 style="color:var(--accent-orange); margin:0;">🎉 BINGO! 🎉</h1>
-            <p id="winner-text" style="font-weight:bold; font-size:1.2rem;"></p>
-            <div id="final-card-display" style="display:flex; justify-content:center; margin: 20px 0;"></div>
-            <div class="footer-timer">Next Game in: <span id="page3-timer">9</span></div>
+          <h1 style="color: var(--accent-orange); margin: 0">🎉 BINGO! 🎉</h1>
+          <p id="winner-text" style="font-weight: bold; font-size: 1.2rem"></p>
+          <div
+            id="final-card-display"
+            style="display: flex; justify-content: center; margin: 20px 0"
+          ></div>
+          <div class="footer-timer">
+            Next Game in: <span id="page3-timer">9</span>
+          </div>
         </div>
+      </div>
     </div>
-</div>
 
-<script>
-    let selectedCards = []; 
-    let drawnBalls = [];
-    let gameActive = false;
+    <script>
+      let selectedCards = [];
+      let drawnBalls = [];
+      let gameActive = false;
 
-    function init() {
-        const grid = document.getElementById('selection-grid');
+      function init() {
+        const grid = document.getElementById("selection-grid");
         for (let i = 1; i <= 400; i++) {
-            const btn = document.createElement('button');
-            btn.className = 'card-btn';
-            btn.innerText = i;
-            btn.onclick = () => toggleSelect(i, btn);
-            grid.appendChild(btn);
+          const btn = document.createElement("button");
+          btn.className = "card-btn";
+          btn.innerText = i;
+          btn.onclick = () => toggleSelect(i, btn);
+          grid.appendChild(btn);
         }
-        startTimer(20, 'header-timer', startLiveGame);
-    }
+        startTimer(20, "header-timer", startLiveGame);
+      }
 
-    function toggleSelect(id, btn) {
-        const idx = selectedCards.findIndex(c => c.id === id);
+      function toggleSelect(id, btn) {
+        const idx = selectedCards.findIndex((c) => c.id === id);
         if (idx > -1) {
-            selectedCards.splice(idx, 1);
-            btn.classList.remove('selected');
+          selectedCards.splice(idx, 1);
+          btn.classList.remove("selected");
         } else if (selectedCards.length < 2) {
-            selectedCards.push({ id: id, grid: generateCard() });
-            btn.classList.add('selected');
+          selectedCards.push({ id: id, grid: generateCard() });
+          btn.classList.add("selected");
         }
-        document.getElementById('selected-count').innerText = selectedCards.length;
-        renderCards('selected-previews');
-    }
+        document.getElementById("selected-count").innerText =
+          selectedCards.length;
+        renderCards("selected-previews");
+      }
 
-    function generateCard() {
-        const ranges = [[1,15],[16,30],[31,45],[46,60],[61,75]];
+      function generateCard() {
+        const ranges = [
+          [1, 15],
+          [16, 30],
+          [31, 45],
+          [46, 60],
+          [61, 75],
+        ];
         let cols = [];
-        for(let i=0; i<5; i++){
-            let c = [];
-            while(c.length < 5){
-                let n = Math.floor(Math.random()*(ranges[i][1]-ranges[i][0]+1))+ranges[i][0];
-                if(!c.includes(n)) c.push(n);
-            }
-            cols.push(c.sort((a,b)=>a-b));
+        for (let i = 0; i < 5; i++) {
+          let c = [];
+          while (c.length < 5) {
+            let n =
+              Math.floor(Math.random() * (ranges[i][1] - ranges[i][0] + 1)) +
+              ranges[i][0];
+            if (!c.includes(n)) c.push(n);
+          }
+          cols.push(c.sort((a, b) => a - b));
         }
         let card = [];
-        for(let r=0; r<5; r++) for(let c=0; c<5; c++) card.push((r===2 && c===2) ? "FREE" : cols[c][r]);
+        for (let r = 0; r < 5; r++)
+          for (let c = 0; c < 5; c++)
+            card.push(r === 2 && c === 2 ? "FREE" : cols[c][r]);
         return card;
-    }
+      }
 
-    function renderCards(targetId) {
-    const container = document.getElementById(targetId);
-    container.innerHTML = '';
-    
-    selectedCards.forEach(card => {
-        const wrap = document.createElement('div');
-        wrap.className = 'bingo-card-live';
-        
-        // Compact Header
-        wrap.innerHTML = `<div style="font-weight:bold; font-size:9px; margin-bottom:4px; color:var(--dark-purple); text-align:center;">Card #${card.id}</div>`;
-        
-        const grid = document.createElement('div');
-        grid.className = 'live-grid';
-        
-        card.grid.forEach(val => {
+      function renderCards(targetId) {
+        const container = document.getElementById(targetId);
+        container.innerHTML = "";
+
+        selectedCards.forEach((card) => {
+          const wrap = document.createElement("div");
+          wrap.className = "bingo-card-live";
+
+          // Compact Header
+          wrap.innerHTML = `<div style="font-weight:bold; font-size:9px; margin-bottom:4px; color:var(--dark-purple); text-align:center;">Card #${card.id}</div>`;
+
+          const grid = document.createElement("div");
+          grid.className = "live-grid";
+
+          card.grid.forEach((val) => {
             const marked = drawnBalls.includes(val) || val === "FREE";
-            const cell = document.createElement('div');
-            cell.className = `live-cell ${marked ? 'marked' : ''}`;
+            const cell = document.createElement("div");
+            cell.className = `live-cell ${marked ? "marked" : ""}`;
             cell.innerText = val === "FREE" ? "★" : val;
-            
-            // Manual Marking
-            cell.onclick = () => { if(gameActive) cell.classList.toggle('marked'); };
-            
-            grid.appendChild(cell);
-        });
-        
-        wrap.appendChild(grid);
-        container.appendChild(wrap);
-    });
-}
 
-    function startTimer(sec, id, cb) {
+            // Manual Marking
+            cell.onclick = () => {
+              if (gameActive) cell.classList.toggle("marked");
+            };
+
+            grid.appendChild(cell);
+          });
+
+          wrap.appendChild(grid);
+          container.appendChild(wrap);
+        });
+      }
+
+      function startTimer(sec, id, cb) {
         let t = sec;
         const el = document.getElementById(id);
         const inter = setInterval(() => {
-            t--; el.innerText = t;
-            if(t <= 0) { clearInterval(inter); cb(); }
+          t--;
+          el.innerText = t;
+          if (t <= 0) {
+            clearInterval(inter);
+            cb();
+          }
         }, 1000);
-    }
+      }
 
-    function startLiveGame() {
-        if(selectedCards.length === 0) selectedCards.push({id:316, grid:generateCard()});
-        document.getElementById('page1').classList.remove('active');
-        document.getElementById('page2').classList.add('active');
+      function startLiveGame() {
+        if (selectedCards.length === 0)
+          selectedCards.push({ id: 316, grid: generateCard() });
+        document.getElementById("page1").classList.remove("active");
+        document.getElementById("page2").classList.add("active");
         renderMasterGrid();
         gameActive = true;
-        
+
         const loop = setInterval(() => {
-            if(!gameActive) { clearInterval(loop); return; }
-            let ball;
-            do { ball = Math.floor(Math.random()*75)+1; } while(drawnBalls.includes(ball));
-            drawnBalls.push(ball);
+          if (!gameActive) {
+            clearInterval(loop);
+            return;
+          }
+          let ball;
+          do {
+            ball = Math.floor(Math.random() * 75) + 1;
+          } while (drawnBalls.includes(ball));
+          drawnBalls.push(ball);
 
-            let letter = ball <= 15 ? 'B' : ball <= 30 ? 'I' : ball <= 45 ? 'N' : ball <= 60 ? 'G' : 'O';
-            document.getElementById('call-display').innerText = `${letter}-${ball}`;
-            document.getElementById(`m-${ball}`).classList.add('called');
-            
-            const hist = document.getElementById('ball-history');
-            hist.innerHTML = drawnBalls.slice(-3).reverse().map(b => `<div style="font-size:12px; font-weight:bold; background:rgba(255,255,255,0.3); padding:4px; border-radius:4px;">${b}</div>`).join('');
-            
-            renderCards('live-player-cards');
+          let letter =
+            ball <= 15
+              ? "B"
+              : ball <= 30
+                ? "I"
+                : ball <= 45
+                  ? "N"
+                  : ball <= 60
+                    ? "G"
+                    : "O";
+          document.getElementById("call-display").innerText =
+            `${letter}-${ball}`;
+          document.getElementById(`m-${ball}`).classList.add("called");
+
+          const hist = document.getElementById("ball-history");
+          hist.innerHTML = drawnBalls
+            .slice(-3)
+            .reverse()
+            .map(
+              (b) =>
+                `<div style="font-size:12px; font-weight:bold; background:rgba(255,255,255,0.3); padding:4px; border-radius:4px;">${b}</div>`,
+            )
+            .join("");
+
+          renderCards("live-player-cards");
         }, 3000);
-    }
+      }
 
-    function renderMasterGrid() {
-        const grid = document.getElementById('master-bingo-grid');
-        const cols = [{l:'B',r:[1,15],c:'var(--b-red)'},{l:'I',r:[16,30],c:'var(--i-blue)'},{l:'N',r:[31,45],c:'var(--n-grey)'},{l:'G',r:[46,60],c:'var(--g-green)'},{l:'O',r:[61,75],c:'var(--o-orange)'}];
-        grid.innerHTML = cols.map(conf => `
+      function renderMasterGrid() {
+        const grid = document.getElementById("master-bingo-grid");
+        const cols = [
+          { l: "B", r: [1, 15], c: "var(--b-red)" },
+          { l: "I", r: [16, 30], c: "var(--i-blue)" },
+          { l: "N", r: [31, 45], c: "var(--n-grey)" },
+          { l: "G", r: [46, 60], c: "var(--g-green)" },
+          { l: "O", r: [61, 75], c: "var(--o-orange)" },
+        ];
+        grid.innerHTML = cols
+          .map(
+            (conf) => `
             <div class="bingo-column">
                 <div class="b-header" style="background:${conf.c}">${conf.l}</div>
-                ${Array.from({length:15}, (_,i)=>conf.r[0]+i).map(n => `<div id="m-${n}" class="num-cell">${n}</div>`).join('')}
+                ${Array.from({ length: 15 }, (_, i) => conf.r[0] + i)
+                  .map((n) => `<div id="m-${n}" class="num-cell">${n}</div>`)
+                  .join("")}
             </div>
-        `).join('');
-    }
+        `,
+          )
+          .join("");
+      }
 
-    function claimBingo() {
+      function claimBingo() {
         gameActive = false;
-        document.getElementById('page2').classList.remove('active');
-        document.getElementById('page3').classList.add('active');
-        
+        document.getElementById("page2").classList.remove("active");
+        document.getElementById("page3").classList.add("active");
+
         const winCard = selectedCards[0];
-        document.getElementById('winner-text').innerText = `Winning Card: #${winCard.id} \nWinner: Dawit_Alpha`;
-        
-        const winDiv = document.getElementById('final-card-display');
-        winDiv.innerHTML = '';
-        const wrap = document.createElement('div');
-        wrap.className = 'bingo-card-live';
-        wrap.style.width = '250px';
-        const gDiv = document.createElement('div');
-        gDiv.className = 'live-grid';
-        winCard.grid.forEach(v => gDiv.innerHTML += `<div class="live-cell marked">${v==="FREE"?'★':v}</div>`);
+        document.getElementById("winner-text").innerText =
+          `Winning Card: #${winCard.id} \nWinner: Dawit_Alpha`;
+
+        const winDiv = document.getElementById("final-card-display");
+        winDiv.innerHTML = "";
+        const wrap = document.createElement("div");
+        wrap.className = "bingo-card-live";
+        wrap.style.width = "250px";
+        const gDiv = document.createElement("div");
+        gDiv.className = "live-grid";
+        winCard.grid.forEach(
+          (v) =>
+            (gDiv.innerHTML += `<div class="live-cell marked">${v === "FREE" ? "★" : v}</div>`),
+        );
         wrap.appendChild(gDiv);
         winDiv.appendChild(wrap);
 
-        startTimer(9, 'page3-timer', () => location.reload());
-    }
+        startTimer(9, "page3-timer", () => location.reload());
+      }
 
-    init();
-</script>
-</body>
+      init();
+    </script>
+  </body>
 </html>
