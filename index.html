@@ -1,55 +1,659 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root { --tg-color: #0088cc; }
-        body { font-family: sans-serif; text-align: center; background: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); }
-        #grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 350px; margin: 20px auto; padding: 10px; }
-        .cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #eee; border-radius: 4px; font-weight: bold; cursor: pointer; color: #333; transition: 0.2s; }
-        .cell.marked { background: var(--tg-color); color: white; transform: scale(0.95); }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JCor Alpha Bingo • Live</title>
+  <style>
+    :root {
+      --bg:        #f5f0fa;
+      --card:      #ffffff;
+      --purple:    #6b48ff;
+      --purple-dark:#4c2ecc;
+      --accent:    #ff9500;
+      --success:   #00c853;
+      --danger:    #ff3b30;
+      --text:      #1c1c1e;
+      --text-light:#6e6e73;
+      --grey:      #e5e5ea;
+      --b: #ff3b30;
+      --i: #007aff;
+      --n: #8e8e93;
+      --g: #34c759;
+      --o: #ff9500;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    #app-container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+
+    .stat-item {
+      padding: 12px 8px;
+      text-align: center;
+      border-right: 1px solid #eee;
+    }
+    .stat-item:last-child { border-right: none; }
+
+    .stat-label {
+      font-size: 0.76rem;
+      color: var(--purple);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .page {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .page.active { display: flex; }
+
+    h2, h3 {
+      color: var(--purple-dark);
+      margin: 0.4em 0;
+    }
+
+    /* ── Selection Phase ── */
+    #selection-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(54px, 1fr));
+      gap: 8px;
+      background: rgba(255,255,255,0.5);
+      padding: 16px;
+      border-radius: 16px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .card-btn {
+      aspect-ratio: 1;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1.05rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .card-btn:hover {
+      background: #f0f0f5;
+      transform: translateY(-1px);
+    }
+    .card-btn.selected {
+      background: var(--success);
+      color: white;
+      border-color: var(--success);
+    }
+
+    #selected-previews {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      padding: 8px 0;
+    }
+
+    /* ── Game Phase ── */
+    .game-wrapper {
+       display: flex;             /* enables row layout */
+    flex-direction: row;       /* horizontal layout */
+    gap: 16px;                 /* space between master and personal */
+    justify-content: flex-start; /* align left, can use center or space-between */
+    align-items: flex-start; 
+    }
+
+    .master-side {
+  width: flex;
+    height: 340px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+}
+
+    .master-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px 8px;
+      flex-grow: 1;
+    }
+
+    .b-header {
+      font-weight: bold;
+      color: white;
+      text-align: center;
+      padding: 10px 4px;
+      border-radius: 10px;
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    }
+
+    .num-cell {
+      aspect-ratio: 1 / 1;
+      min-height: 32px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-weight: 600;
+      font-size: clamp(0.8rem, 2.2vw, 1rem);
+      transition: all 0.25s;
+    }
+
+    .num-cell.called {
+      background: var(--success);
+      color: white;
+      transform: scale(1.08);
+      box-shadow: 0 3px 10px rgba(0,200,83,0.4);
+    }
+
+    .personal-side {
+     width: flex;
+    height: 100px;    /* same height as master for alignment */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;             /* smaller gap between items */
+}
+
+    .caller-card {
+      background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+      color: white;
+      padding: 16px;
+      border-radius: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 16px rgba(107,72,255,0.3);
+    }
+
+    .call-text {
+      background: white;
+      color: var(--purple-dark);
+      font-size: 2.6rem;
+      font-weight: 800;
+      padding: 8px 20px;
+      border-radius: 12px;
+      min-width: 140px;
+      text-align: center;
+    }
+
+    #ball-history {
+      display: flex;
+      gap: 8px;
+    }
+    #ball-history > div {
+      background: rgba(255,255,255,0.25);
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-weight: bold;
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .bingo-card-live {
+      background: white;
+      border: 3px solid var(--purple);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 260px;
+      margin: 0 auto;
+    }
+
+    .card-title {
+      text-align: center;
+      font-weight: 700;
+      color: var(--purple-dark);
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+
+    .live-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .live-cell {
+      aspect-ratio: 1;
+      background: #f0f2f5;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 1rem;
+      user-select: none;
+      transition: all 0.2s;
+    }
+
+    .live-cell.marked {
+      background: var(--accent);
+      color: white;
+      transform: scale(1.06);
+      box-shadow: 0 3px 10px rgba(255,149,0,0.4);
+    }
+
+    .live-cell.free {
+      background: #e8f5e9;
+      color: #2e7d32;
+      font-size: 1.3rem;
+    }
+
+    .bingo-btn {
+      margin-top: auto;
+      background: var(--accent);
+      color: white;
+      border: none;
+      font-size: 1.5rem;
+      font-weight: 700;
+      padding: 18px;
+      border-radius: 16px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #d67c00;
+      transition: all 0.12s;
+    }
+
+    .bingo-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #d67c00;
+    }
+
+    /* ── Winner Screen ── */
+    .winner-screen {
+      background: white;
+      border-radius: 24px;
+      padding: 32px 20px;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      border: 5px solid var(--accent);
+    }
+
+    .winner-title {
+      font-size: 3.2rem;
+      margin: 0;
+      color: var(--accent);
+    }
+
+    .footer-timer {
+      margin-top: 24px;
+      background: var(--purple);
+      color: white;
+      padding: 16px;
+      font-size: 1.4rem;
+      font-weight: 600;
+      border-radius: 16px;
+    }
+
+    /* ── Height matching (Option 4) ── */
+    @media (min-width: 781px) {
+      .game-wrapper {
+        min-height: 70vh;
+        align-items: stretch;
+      }
+
+      .master-side,
+      .personal-side {
+        height: 100%;
+        min-height: 540px;
+      }
+
+      .personal-side {
+        justify-content: space-between;
+      }
+
+      #live-player-cards {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        justify-content: flex-start;
+      }
+
+      .master-grid {
+        overflow-y: auto;
+        scrollbar-width: thin;
+      }
+    }
+
+    @media (max-width: 780px) {
+      .game-wrapper {
+        flex-direction: row;
+        min-height: unset;
+        align-items: flex-start;
+      }
+
+      .master-side,
+      .personal-side {
+        height: 350;
+        min-height: unset;
+      }
+
+      #live-player-cards {
+        flex-grow: unset;
+      }
+
+      .master-side {
+        max-height: 55vh;
+        overflow-y: auto;
+      }
+
+      .num-cell {
+        min-height: 26px;
+        font-size: clamp(0.7rem, 3.5vw, 0.9rem);
+      }
+
+      .b-header {
+        padding: 8px 3px;
+        font-size: clamp(0.8rem, 3vw, 1rem);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-bar {
+        grid-template-columns: 1fr 1fr;
+      }
+      .stat-item:nth-child(3) {
+        grid-column: 1 / -1;
+        border-top: 1px solid #eee;
+        border-right: none;
+      }
+      .live-cell {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
 </head>
 <body>
-    <h3>Bingo!</h3>
-    <div id="grid">Loading...</div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+<div id="app-container">
 
-        const API_URL = "https://backend-production-3ceff.up.railway.app"; // CHANGE THIS
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-label">Starts In</div>
+      <div class="stat-value" id="header-timer">20</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Wallet</div>
+      <div class="stat-value">$100.00</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Cards</div>
+      <div class="stat-value" id="selected-count">0</div>
+    </div>
+  </div>
 
-        async function init() {
-            try {
-                const res = await fetch(`${API_URL}/generate_card`);
-                const data = await res.json();
-                const grid = document.getElementById('grid');
-                grid.innerHTML = '';
-                
-                data.card.forEach(num => {
-                    const div = document.createElement('div');
-                    div.className = 'cell';
-                    div.innerText = num;
-                    div.onclick = () => {
-                        div.classList.toggle('marked');
-                        tg.HapticFeedback.impactOccurred('light');
-                    };
-                    grid.appendChild(div);
-                });
+  <!-- PAGE 1 – Selection -->
+  <div id="page1" class="page active">
+    <h2>Select Your Cards</h2>
+    <div id="selection-grid"></div>
+    <h3>Your Selected Cards</h3>
+    <div id="selected-previews"></div>
+  </div>
 
-                tg.MainButton.setText("CLAIM BINGO!").show();
-                tg.MainButton.onClick(() => {
-                    const marked = Array.from(document.querySelectorAll('.cell.marked')).map(e => e.innerText);
-                    tg.sendData(JSON.stringify({ event: "bingo_win", numbers: marked }));
-                });
-            } catch (e) { document.getElementById('grid').innerText = "Error loading game."; }
-        }
-        init();
-    </script>
+  <!-- PAGE 2 – Game -->
+  <div id="page2" class="page">
+    <div class="game-wrapper">
+
+      <div class="master-side">
+        <div id="master-bingo-grid" class="master-grid"></div>
+      </div>
+
+      <div class="personal-side">
+        <div class="caller-card">
+          <div>
+            <div style="font-size:0.8rem; opacity:0.9; margin-bottom:4px;">CURRENT CALL</div>
+            <div id="call-display" class="call-text">– –</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.8rem; opacity:0.9; margin-bottom:6px;">LAST CALLS</div>
+            <div id="ball-history"></div>
+          </div>
+        </div>
+
+        <div id="live-player-cards"></div>
+
+        <button class="bingo-btn" onclick="claimBingo()">BINGO!</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PAGE 3 – Winner -->
+  <div id="page3" class="page">
+    <div class="winner-screen">
+      <h1 class="winner-title">🎉 BINGO! 🎉</h1>
+      <p id="winner-text" style="font-size:1.4rem; font-weight:600; margin:16px 0;"></p>
+      <div id="final-card-display" style="margin:24px 0;"></div>
+      <div class="footer-timer">Next game in: <span id="page3-timer">9</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ────────────────────────────────────────────────
+let selectedCards = [];
+let drawnBalls     = [];
+let gameActive     = false;
+// ────────────────────────────────────────────────
+
+function init() {
+  const grid = document.getElementById('selection-grid');
+  for (let i = 1; i <= 400; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'card-btn';
+    btn.textContent = i;
+    btn.onclick = () => toggleSelect(i, btn);
+    grid.appendChild(btn);
+  }
+  startTimer(20, 'header-timer', startLiveGame);
+}
+
+function toggleSelect(id, btn) {
+  const idx = selectedCards.findIndex(c => c.id === id);
+  if (idx > -1) {
+    selectedCards.splice(idx, 1);
+    btn.classList.remove('selected');
+  } else if (selectedCards.length < 1) {
+    selectedCards.push({ id, grid: generateCard() });
+    btn.classList.add('selected');
+  }
+  document.getElementById('selected-count').textContent = selectedCards.length;
+  renderCards('selected-previews');
+}
+
+function generateCard() {
+  const ranges = [[1,15],[16,30],[31,45],[46,60],[61,75]];
+  const cols = [];
+  for (let i = 0; i < 5; i++) {
+    const c = [];
+    while (c.length < 5) {
+      const n = ranges[i][0] + Math.floor(Math.random() * (ranges[i][1] - ranges[i][0] + 1));
+      if (!c.includes(n)) c.push(n);
+    }
+    cols.push(c.sort((a,b)=>a-b));
+  }
+  const card = [];
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      card.push((r === 2 && c === 2) ? "FREE" : cols[c][r]);
+    }
+  }
+  return card;
+}
+
+function renderCards(containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+
+  selectedCards.forEach(({id, grid}) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'bingo-card-live';
+    wrap.innerHTML = `<div class="card-title">Card #${id}</div>`;
+
+    const g = document.createElement('div');
+    g.className = 'live-grid';
+
+    grid.forEach(val => {
+      const marked = drawnBalls.includes(val) || val === "FREE";
+      const cls = val === "FREE" ? "live-cell free" : marked ? "live-cell marked" : "live-cell";
+
+      const cell = document.createElement('div');
+      cell.className = cls;
+      cell.textContent = val === "FREE" ? "★" : val;
+
+      if (containerId === 'live-player-cards') {
+        cell.onclick = () => { if (gameActive) cell.classList.toggle('marked'); };
+      }
+
+      g.appendChild(cell);
+    });
+
+    wrap.appendChild(g);
+    container.appendChild(wrap);
+  });
+}
+
+function startTimer(seconds, elementId, callback) {
+  let t = seconds;
+  const el = document.getElementById(elementId);
+  el.textContent = t;
+
+  const iv = setInterval(() => {
+    t--;
+    el.textContent = t;
+    if (t <= 0) {
+      clearInterval(iv);
+      callback();
+    }
+  }, 1000);
+}
+
+function renderMasterGrid() {
+  const container = document.getElementById('master-bingo-grid');
+  const cols = [
+    {letter:'B', range:[1,15],   color:'var(--b)'},
+    {letter:'I', range:[16,30],  color:'var(--i)'},
+    {letter:'N', range:[31,45],  color:'var(--n)'},
+    {letter:'G', range:[46,60],  color:'var(--g)'},
+    {letter:'O', range:[61,75],  color:'var(--o)'},
+  ];
+
+  let html = '';
+  // Headers (row 1)
+  html += cols.map(col => `
+    <div class="b-header" style="background:${col.color}">${col.letter}</div>
+  `).join('');
+
+  // Numbers (rows 2–16)
+  for (let row = 0; row < 15; row++) {
+    cols.forEach(col => {
+      const num = col.range[0] + row;
+      html += `<div id="m-${num}" class="num-cell">${num}</div>`;
+    });
+  }
+
+  container.innerHTML = html;
+}
+
+function startLiveGame() {
+  if (selectedCards.length === 0) {
+    selectedCards.push({id: 316, grid: generateCard()});
+  }
+
+  document.getElementById('page1').classList.remove('active');
+  document.getElementById('page2').classList.add('active');
+
+  renderMasterGrid();
+  gameActive = true;
+
+  setInterval(() => {
+    if (!gameActive) return;
+
+    let ball;
+    do { ball = Math.floor(Math.random() * 75) + 1; } while (drawnBalls.includes(ball));
+    drawnBalls.push(ball);
+
+    const letter = ball <= 15 ? 'B' : ball <= 30 ? 'I' :
+                   ball <= 45 ? 'N' : ball <= 60 ? 'G' : 'O';
+
+    document.getElementById('call-display').textContent = `${letter}-${ball}`;
+    document.getElementById(`m-${ball}`)?.classList.add('called');
+
+    const hist = document.getElementById('ball-history');
+    hist.innerHTML = drawnBalls.slice(-3).reverse()
+      .map(b => `<div>${b}</div>`).join('');
+
+    renderCards('live-player-cards');
+  }, 3200);
+}
+
+function claimBingo() {
+  if (!gameActive) return;
+  gameActive = false;
+
+  document.getElementById('page2').classList.remove('active');
+  document.getElementById('page3').classList.add('active');
+
+  const winCard = selectedCards[0];
+  document.getElementById('winner-text').textContent =
+    `Winning Card: #${winCard.id}   •   Winner: Dawit_Alpha`;
+
+  const cont = document.getElementById('final-card-display');
+  cont.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'bingo-card-live';
+  wrap.style.maxWidth = '280px';
+
+  const g = document.createElement('div');
+  g.className = 'live-grid';
+
+  winCard.grid.forEach(v => {
+    const cell = document.createElement('div');
+    cell.className = 'live-cell marked';
+    cell.textContent = v === "FREE" ? "★" : v;
+    g.appendChild(cell);
+  });
+
+  wrap.innerHTML = `<div class="card-title">Card #${winCard.id}</div>`;
+  wrap.appendChild(g);
+  cont.appendChild(wrap);
+
+  startTimer(9, 'page3-timer', () => location.reload());
+}
+
+init();
+</script>
 </body>
 </html>
-
