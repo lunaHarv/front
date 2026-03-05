@@ -424,7 +424,7 @@
         if (idx > -1) {
           selectedCards.splice(idx, 1);
           btn.classList.remove("selected");
-        } else if (selectedCards.length < 1) {
+        } else if (selectedCards.length < 5) {
           selectedCards.push({ id: id, grid: generateCard() });
           btn.classList.add("selected");
         }
@@ -605,4 +605,5 @@
     </script>
   </body>
 </html>
+
 
